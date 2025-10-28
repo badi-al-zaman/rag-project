@@ -1,1 +1,8 @@
 fastapi[standard]
+chromadb
+llama-index
+llama-index-llms-ollama
+llama-index-embeddings-huggingface
+llama-index-vector-stores-chroma
+llama-index-storage-chat-store-postgres
+langchain-text-splitters

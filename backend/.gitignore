@@ -1,2 +1,6 @@
 myenv
 .env
+requirements_core.txt
+__pycache__
+vector_db
+.idea
