@@ -1,34 +1,41 @@
 # database.py
+from fastapi import Depends
+from typing import Annotated, AsyncGenerator
+
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import create_engine, Session, select, SQLModel
+
 from psycopg.rows import dict_row
 import psycopg
 
 from app.core.config import settings as server_settings
-from fastapi import Depends
-from typing import Annotated
 
 # from app.models.user_models import User, UserCreate
 # from app.models.user_crud import create_user
 import app.models.conversation_models
 import app.models.document_models
 
-DATABASE_URI = str(server_settings.SQLALCHEMY_DATABASE_URI)
+SYN_DATABASE_URI = str(server_settings.SQLALCHEMY_SYN_DATABASE_URI)
+ASYN_DATABASE_URI = str(server_settings.SQLALCHEMY_ASYN_DATABASE_URI)
 FIRST_SUPERUSER = server_settings.FIRST_SUPERUSER
 FIRST_SUPERUSER_PASSWORD = server_settings.FIRST_SUPERUSER_PASSWORD
 
 # psycopg3 works directly with SQLModel's create_engine
-engine = create_engine(DATABASE_URI)  # echo=False
+engine = create_engine(SYN_DATABASE_URI)  # echo=False
 
 
+# get DB session
 def get_db_session():
     with Session(engine) as session:
         yield session
 
 
-def get_db_connection():
-    with psycopg.connect(DATABASE_URI,
-                         row_factory=dict_row) as conn:
-        yield conn
+# Bool connection of DB
+# def get_db_connection():
+#     with psycopg.connect(DATABASE_URI,
+#                          row_factory=dict_row) as conn:
+#         yield conn
 
 
 def init_db() -> None:
@@ -49,4 +56,35 @@ def init_db() -> None:
     #         print(user)
 
 
+# Step 1: Create async engine and session
+async_engine = create_async_engine(
+    ASYN_DATABASE_URI,  # Async connection string
+    # echo=True,  # Optional: Set to False in production
+    future=True,
+)
+
+# Step 2: Set up async session
+async_session = async_sessionmaker(
+    bind=async_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+# Step 3: Create a dependency to yield an async session
+async def _get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+
+# Wrap _get_async_session with Depends for FastAPI to keep type checking happy
+get_async_session = Depends(_get_async_session)
+
 SessionDep = Annotated[Session, Depends(get_db_session)]
+
+# from llama_index.storage.chat_store.postgres import PostgresChatStore
+#
+# chat_store = PostgresChatStore.from_uri(
+#     uri=SYN_DATABASE_URI
+#     # table_name="session"
+# )
