@@ -2,7 +2,8 @@ myenv
 .venv
 .env
 requirements_core.txt
-__pycache__
+__pycache__/
 vector_db
-.idea
+.idea/
 .git
+**/__pycache__/
