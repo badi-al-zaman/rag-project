@@ -72,7 +72,7 @@ index = VectorStoreIndex.from_vector_store(
 
 
 def search_query_pipline_v2(query: str, custom_index=index):
-    retriever = custom_index.as_retriever()
+    retriever = custom_index.as_retriever(similarity_top_k=3)
     # Step 4: Search vector database
     response = retriever.retrieve(query)
     return response

@@ -63,7 +63,7 @@ def run_complete_rag_pipeline_v2(query: str):
     5. Context augmentation
     6. Response generation
     """
-    retriever = index.as_query_engine()
+    retriever = index.as_query_engine(similarity_top_k=3)
     return retriever.query(query)
 
     # # Step 3: Process user query
