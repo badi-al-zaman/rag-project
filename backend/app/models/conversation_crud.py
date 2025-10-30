@@ -6,6 +6,7 @@ from app.models.conversation_models import Session as ChatSession, Message, Retr
 from typing import List
 from datetime import datetime, timezone
 from fastapi import HTTPException, status
+from app.utils.logger import logger
 
 
 def create_session(db: Session, title: str = None, user_id=None, metadata=None):
@@ -121,6 +122,7 @@ def add_message(db: Session, session_id, content: str, role="user", tokens=None,
         raise
 
     except SQLAlchemyError as e:
+        logger.exception(f"Unexpected error: {str(e)}")
         db.rollback()
         # Optionally log e for debugging
         raise HTTPException(
