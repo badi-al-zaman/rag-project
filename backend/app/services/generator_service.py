@@ -7,7 +7,7 @@ from typing import List, Dict
 from llama_index.core.schema import TextNode
 from app.utils.logger import logger
 
-from app.services.retriever_service import index as wiki_index_v2
+from app.services.retriever_service import index as wiki_index_v2, search_query_pipline
 
 model = Ollama(
     model="llama3.1:8b",  # local model name
@@ -56,7 +56,11 @@ Include relevant resources details and any limitations or requirements.
     return augmented_prompt
 
 
-def llm_chat(prompt: str, session):
+# ========================================
+# SECTION 6: RESPONSE GENERATION
+# ========================================
+
+async def llm_chat(prompt: str, session):
     # messages = [
     #     ChatMessage(
     #         role="system", content="You are a pirate with a colorful personality"
@@ -73,7 +77,7 @@ def llm_chat(prompt: str, session):
             messages.append(ChatMessage(
                 role=message["role"], content=message["content"]
             ))
-    response = model.chat(messages=messages)
+    response = await model.achat(messages=messages)
     return str(response)
 
 
@@ -81,11 +85,6 @@ async def llm_chat_v2(prompt: str, chat_memory):
     query_engine = wiki_index_v2.as_chat_engine(chat_mode=ChatMode.BEST, memory=chat_memory)
     response = await query_engine.achat(prompt)  # chat_history=messages
     return response
-
-
-# ========================================
-# SECTION 6: RESPONSE GENERATION
-# ========================================
 
 
 def generate_response(augmented_prompt: str) -> str:
@@ -107,6 +106,46 @@ def generate_response(augmented_prompt: str) -> str:
     # response = generator_complete(augmented_prompt)
 
     return response
+
+
+async def search_documents_v1(query: str) -> str:
+    """Search through wiki articles about John Adams and James Monroe."""
+    if query.strip() != "":
+        search_results = search_query_pipline(query)
+        # Step 5: Augment prompt with context
+        augmented_prompt = augment_prompt_with_context(query, search_results)
+        # Step 6: Generate response
+        response = generate_response(augmented_prompt)
+        return response
+    return ""
+
+
+async def ask_agent_v1(prompt: str, session):
+    messages = []
+    for message in session["messages"]:
+        if len(message["retrieved_docs"]) != 0:
+            messages.append(ChatMessage(
+                role=message["role"], content=augment_prompt_with_context(prompt, message["retrieved_docs"])
+            ))
+        else:
+            messages.append(ChatMessage(
+                role=message["role"], content=message["content"]
+            ))
+    response = await model.achat(messages=messages, tools=[search_documents_v1], think=True)
+    logger.info(response)
+    messages.append(response.message)
+    if response.message.tool_calls:
+        # only recommended for models which only return a single tool call
+        call = response.message.tool_calls[0]
+        result = search_documents_v1(**call.function.arguments)
+        # add the tool result to the messages
+        messages.append({"role": "tool", "tool_name": call.function.name, "content": str(result)})
+
+        final_response = await model.achat(messages=messages, tools=[search_documents_v1], think=True)
+        # print(final_response.message.content)
+        return str(final_response)
+
+    return str(response)
 
 
 async def search_documents(query: str) -> str:
