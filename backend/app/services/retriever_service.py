@@ -1,6 +1,8 @@
 import chromadb
 from chromadb.config import Settings
 
+from app.services.embedding_service import load_and_chunk_documents, setup_vector_database, process_user_query
+
 
 # ========================================
 # SECTION 4: VECTOR SEARCH
@@ -69,6 +71,30 @@ index = VectorStoreIndex.from_vector_store(
     vector_store,
     embed_model=embed_model,
 )
+
+
+def search_query_pipline(query: str):
+    # Initialize ChromaDB client
+    chroma_client = chromadb.PersistentClient("vector_db/chroma", settings=Settings(anonymized_telemetry=False))
+
+    # Create collection (what is the collection name? | What similarity metric is used? | embedding_functions)
+    collection = chroma_client.get_or_create_collection(name="wiki_articles_v1", metadata={
+        "hnsw:space": "cosine"}, )
+
+    # index documents if they are not indexed before
+    if collection.count() == 0:
+        # Step 1: Load and chunk documents to the vector client
+        chunks = load_and_chunk_documents()
+
+        # Step 2: Setup vector database client
+        setup_vector_database(chunks)
+
+    # Step 3: Process user query
+    model, query_embedding = process_user_query(query)
+
+    # Step 4: Search vector database
+    search_results = search_vector_database(collection, query_embedding, top_k=3)
+    return search_results
 
 
 def search_query_pipline_v2(query: str, custom_index=index):
