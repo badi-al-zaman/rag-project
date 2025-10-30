@@ -9,13 +9,11 @@ from sqlalchemy.dialects.postgresql import JSON
 
 class Session(SQLModel, table=True):
     session_id: UUID = Field(default_factory=uuid4, primary_key=True)
-    # user_id: UUID = Field(foreign_key="user.user_id", nullable=False, ondelete="CASCADE")
     title: str = "default_session_title"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_active_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     meta: Optional[dict] = Field(default=None, sa_column=Column(JSON))
 
-    # user: "User" = Relationship(back_populates="sessions")
     messages: list["Message"] = Relationship(back_populates="session", cascade_delete=True)
 
 

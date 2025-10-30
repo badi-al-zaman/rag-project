@@ -1,28 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends
-
-import chromadb
-from chromadb.config import Settings
+from fastapi import APIRouter
 
 from app.core.db import SessionDep
 from app.services.embedding_service import load_and_chunk_documents
-from app.services.embedding_service import setup_vector_database, process_user_query
-from app.services.retriever_service import search_vector_database, search_query_pipline
+from app.services.embedding_service import setup_vector_database
+from app.services.retriever_service import search_query_pipline
 from app.services.generator_service import llm_chat, ask_agent_v1
 from app.services.rag_service import run_complete_rag_pipeline
-from app.models.conversation_models import Session as SessionModel
 import app.models.conversation_crud as conversation_crud
 
 from pydantic import BaseModel
-from typing import List
 
 router = APIRouter()
-
-
-class Document(BaseModel):
-    id: str
-    title: str
-    content: str
-    similarity: float
 
 
 @router.post("/index")

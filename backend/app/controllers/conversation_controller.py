@@ -19,8 +19,3 @@ def get_session_messages(session_id: str, db: SessionDep, limit: int = 50):
 @session_router.post("/sessions/{session_id}/messages")
 def add_message(msg: schemas.MessageCreate, db: SessionDep):
     return conversation_crud.add_message(db, **msg.model_dump())
-
-# @session_router.post("/messages/{message_id}/retrieved_docs")
-# def attach_docs(message_id: str, docs: List[dict], db: SessionDep):
-#     conversation_crud.attach_retrieved_docs(db, message_id, docs)
-#     return {"status": "ok"}

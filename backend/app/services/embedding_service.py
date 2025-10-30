@@ -3,7 +3,7 @@ from chromadb.config import Settings
 import chromadb
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, Document
+from llama_index.core import SimpleDirectoryReader
 
 
 # ========================================
@@ -133,22 +133,13 @@ def process_user_query(query: str):
 # ========================================
 # Version 2 setup using llama-index framework
 # ========================================
-from llama_index.core.extractors import TitleExtractor
-from llama_index.llms.ollama import Ollama
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.core.bridge.pydantic import BaseModel
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core.schema import Node
-
-
-class Title(BaseModel):
-    """A Document Title """
-    title: str
 
 
 def load_and_chunk_documents_v2(vector_store, path="./app/data/articles"):
@@ -168,19 +159,10 @@ def load_and_chunk_documents_v2(vector_store, path="./app/data/articles"):
 
     embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    # configure LLM model to use it for extracting documents' metadata like: title,....
-    # llm = Ollama(
-    #     model="llama3.1:8b",  # local model name
-    #     request_timeout=360.0,
-    #     context_window=8000
-    # )
-    # sllm = llm.as_structured_llm(Title)
-
     # create the chunks' pipeline with transformations
     pipeline = IngestionPipeline(
         transformations=[
             SentenceSplitter(chunk_size=200, chunk_overlap=50),
-            # TitleExtractor(llm=sllm),
             embed_model,
         ],
         vector_store=vector_store,
@@ -190,24 +172,9 @@ def load_and_chunk_documents_v2(vector_store, path="./app/data/articles"):
     # run the pipeline to generate documents embeddings and store them
     pipeline.run(documents=documents, num_workers=4)
 
-    # print(nodes[0].extra_info["document_title"])
-
     # save -- Local Cache Management --
     pipeline.persist("cache/pipeline_storage")
 
-    # index = VectorStoreIndex.from_vector_store(vector_store)
-    # return index
-
-
-# def get_index():
-#     # Step 1: Setup vector database
-#     vector_store = setup_vector_database_v2()
-#
-#     # storage_context = StorageContext.from_defaults(vector_store=vector_store)
-#     index = VectorStoreIndex.from_vector_store(
-#         vector_store, embed_model=HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2"),
-#     )
-#     return index
 
 def setup_vector_database_v2(chunks: List[Node] | None = None):
     """
@@ -226,11 +193,5 @@ def setup_vector_database_v2(chunks: List[Node] | None = None):
         "hnsw:space": "cosine"})
 
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    # storage_context = StorageContext.from_defaults(vector_store=vector_store)
-    #
-    # index = VectorStoreIndex.build_index_from_nodes(
-    #     nodes=chunks, storage_context=storage_context, embed_model=embed_model
-    # )
 
     return vector_store

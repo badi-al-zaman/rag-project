@@ -1,12 +1,12 @@
 # ========================================
 # SECTION 7: COMPLETE RAG PIPELINE
 # ========================================
-from llama_index.core import VectorStoreIndex, Settings, StorageContext
+from llama_index.core import Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
-from app.services.embedding_service import load_and_chunk_documents, load_and_chunk_documents_v2
-from app.services.embedding_service import setup_vector_database, process_user_query, setup_vector_database_v2
-from app.services.retriever_service import search_vector_database, search_query_pipline_v2, index
+from app.services.embedding_service import load_and_chunk_documents
+from app.services.embedding_service import setup_vector_database, process_user_query
+from app.services.retriever_service import search_vector_database, index
 from app.services.generator_service import augment_prompt_with_context, generate_response
 from llama_index.llms.ollama import Ollama
 
@@ -65,13 +65,3 @@ def run_complete_rag_pipeline_v2(query: str):
     """
     retriever = index.as_query_engine(similarity_top_k=3)
     return retriever.query(query)
-
-    # # Step 3: Process user query
-    # # Step 4: Search vector database
-    # search_results = search_query_pipline_v2(query, index)
-
-    # # Step 5: Augment prompt with context
-    # augmented_prompt = augment_prompt_with_context(query, search_results)
-    #
-    # # Step 6: Generate response
-    # response = generate_response(augmented_prompt)

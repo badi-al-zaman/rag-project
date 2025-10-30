@@ -3,8 +3,6 @@ from llama_index.core.chat_engine.types import ChatMode
 from llama_index.llms.ollama import Ollama
 from llama_index.core.llms import ChatMessage
 from typing import List, Dict
-# from app.models import Message
-from llama_index.core.schema import TextNode
 from app.utils.logger import logger
 
 from app.services.retriever_service import index as wiki_index_v2, search_query_pipline
@@ -61,12 +59,6 @@ Include relevant resources details and any limitations or requirements.
 # ========================================
 
 async def llm_chat(prompt: str, session):
-    # messages = [
-    #     ChatMessage(
-    #         role="system", content="You are a pirate with a colorful personality"
-    #     ),
-    #     ChatMessage(role="user", content="What is your name"),
-    # ]
     messages = []
     for message in session["messages"]:
         if len(message["retrieved_docs"]) != 0:
@@ -98,14 +90,11 @@ def generate_response(augmented_prompt: str) -> str:
     - Output structure
     """
     # LLM processing...
-
     response = model.chat(messages=[ChatMessage(
         role="user", content=augmented_prompt)
     ])
-    return str(response)
-    # response = generator_complete(augmented_prompt)
 
-    return response
+    return str(response)
 
 
 async def search_documents_v1(query: str) -> str:
@@ -158,9 +147,6 @@ async def search_documents(query: str) -> str:
     return ""
 
 
-from llama_index.core.agent.workflow import AgentWorkflow
-
-#
 # ### Response Guidelines
 # 1. **Clarity & Accuracy:** Provide concise, factual, and verifiable answers based on the search results.
 # 2. **Citation:** When possible, mention the source context (e.g., “According to the John Adams article…”).
@@ -187,13 +173,6 @@ important: Before answering, decide if document search tool is needed"
 - Optionally, follow with a short “Explanation” or “Summary of findings” section.
 """
 system_prompt_2 = """You are a helpful assistant that can perform search through documents to answer questions."""
-
-# Create an enhanced workflow with tools
-# agent = AgentWorkflow.from_tools_or_functions(
-#     [search_documents],
-#     llm=model,
-#     system_prompt=system_prompt,
-# )
 
 # https://developers.llamaindex.ai/python/framework/module_guides/deploying/agents/tools#return-direct
 # tool = QueryEngineTool.from_defaults(

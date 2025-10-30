@@ -5,10 +5,6 @@ from typing import Annotated, AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import create_engine, Session, select, SQLModel
-
-from psycopg.rows import dict_row
-import psycopg
-
 from app.core.config import settings as server_settings
 
 # from app.models.user_models import User, UserCreate
@@ -29,13 +25,6 @@ engine = create_engine(SYN_DATABASE_URI)  # echo=False
 def get_db_session():
     with Session(engine) as session:
         yield session
-
-
-# Bool connection of DB
-# def get_db_connection():
-#     with psycopg.connect(DATABASE_URI,
-#                          row_factory=dict_row) as conn:
-#         yield conn
 
 
 def init_db() -> None:
@@ -81,10 +70,3 @@ async def _get_async_session() -> AsyncGenerator[AsyncSession, None]:
 get_async_session = Depends(_get_async_session)
 
 SessionDep = Annotated[Session, Depends(get_db_session)]
-
-# from llama_index.storage.chat_store.postgres import PostgresChatStore
-#
-# chat_store = PostgresChatStore.from_uri(
-#     uri=SYN_DATABASE_URI
-#     # table_name="session"
-# )
